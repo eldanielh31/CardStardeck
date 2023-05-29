@@ -7,9 +7,12 @@ Servo servo1, servo2;
 
 const int botonInicioPin = 2;
 const int botonDetenerPin = 3;
+const int servoPlataformaPin = 9;
+const int servoCartaPin = 10;
 volatile bool contadorIniciado = false;
 volatile bool detenerContador = false;
-volatile unsigned long contador = 0;
+volatile unsigned int contador = 0;
+volatile unsigned int posServo1 = 0;
 
 int valoresSeleccionados[7];
 int contadorValores = 0;
@@ -18,11 +21,12 @@ void displayStart();
 void iniciarContador();
 void pararContador();
 bool validarNumeroEnArray(int numero, const int *arreglo, int longitud);
+void tirarCarta();
 
-    void setup()
+void setup()
 {
-  servo1.attach(9);
-  servo2.attach(10);
+  servo1.attach(servoPlataformaPin);
+  servo2.attach(servoCartaPin);
 
   pinMode(botonInicioPin, INPUT_PULLUP);
   pinMode(botonDetenerPin, INPUT_PULLUP);
@@ -46,46 +50,63 @@ void loop()
       {
         contador++;
         if (contador > 18)
+        {
           contador = 1;
+          posServo1 = 0;
+          servo1.write(posServo1);
+        }
 
         lcd.clear();
         lcd.print("Carta actual: " + String(contador));
+        servo1.write(posServo1);
         delay(1000);
-
+        posServo1 += 10;
       }
-      
+
       lcd.clear();
-      if (!validarNumeroEnArray(contador, valoresSeleccionados, 7)){
+      if (!validarNumeroEnArray(contador, valoresSeleccionados, 7))
+      {
         lcd.print("Carta elegida: " + String(contador));
         valoresSeleccionados[contadorValores] = contador;
         contadorValores++;
-      }else{
-        lcd.print("Carta " + String(contador));
-        lcd.setCursor(0,1);
-        lcd.print("Ya seleccionada!");
+        tirarCarta();
+        posServo1 = 0;
       }
+      else
+      {
+        lcd.print("Carta " + String(contador));
+        lcd.setCursor(0, 1);
+        lcd.print("Ya seleccionada!");
+        posServo1 = 0;
+      }
+      delay(500);
 
-      delay(1000);
+      // delay(1000);
       displayStart();
       // Reiniciar variables
       contador = 0;
       contadorIniciado = false;
       detenerContador = false;
-
-      
     }
     lcd.clear();
     lcd.print("Cartas elegidas:");
-    lcd.setCursor(0,1);
+    lcd.setCursor(0, 1);
     for (int i = 0; i < contadorValores; i++)
     {
-      lcd.print(valoresSeleccionados[i]);
+      lcd.print(String(valoresSeleccionados[i]) + ' ');
       delay(500);
     }
 
     contadorValores = 0;
-    
   }
+}
+
+void tirarCarta()
+{
+  servo2.write(0);
+  delay(500);
+  servo2.write(90);
+  delay(500);
 }
 
 void displayStart()
